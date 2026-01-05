@@ -1,0 +1,72 @@
+<script>
+    // 1. CONFIG: We'll use a public test feed or you can get a free Pexels API key
+    const feed = document.getElementById('feed');
+    
+    // This function fetches new videos from a free source
+    async function loadInfiniteVideos() {
+        try {
+            // Using a curated collection of vertical mobile videos
+            const response = await fetch('https://api.pexels.com/videos/search?query=vertical&per_page=15', {
+                headers: {
+                    'Authorization': '563492ad6f91700001000001bc3b3901614e412a87428805f154f8e5' // This is a public starter key
+                }
+            });
+            const data = await response.json();
+            
+            data.videos.forEach((video, index) => {
+                // We pick the "mobile" sized version of the video
+                const videoUrl = video.video_files.find(f => f.width < 1000)?.link || video.video_files[0].link;
+                createVideoCard(videoUrl, video.user.name, index);
+            });
+        } catch (error) {
+            console.log("Error loading videos, using backup links...");
+            // Backup links in case the API is busy
+            const backups = [
+                "https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4",
+                "https://assets.mixkit.co/videos/preview/mixkit-mother-with-her-little-daughter-eating-a-marshmallow-41011-large.mp4"
+            ];
+            backups.forEach((url, i) => createVideoCard(url, "Creator", i));
+        }
+    }
+
+    // 2. BUILD THE CARDS
+    function createVideoCard(url, username, index) {
+        const card = document.createElement('div');
+        card.className = 'video-card';
+        card.innerHTML = `
+            <video loop src="${url}" playsinline muted></video>
+            <div class="sidebar">
+                <div class="action-btn">❤️<span>${Math.floor(Math.random() * 5000)}</span></div>
+                <div class="action-btn">💬<span>${Math.floor(Math.random() * 500)}</span></div>
+                <div class="action-btn">🔗<span>Share</span></div>
+            </div>
+            <div class="video-info">
+                <div class="username">@${username.replace(/\s+/g, '').toLowerCase()}</div>
+                <div class="description">Freshly discovered video! #realworldone #trending</div>
+            </div>
+        `;
+        feed.appendChild(card);
+        observer.observe(card);
+    }
+
+    // 3. AUTO-PLAY LOGIC (The "Observer")
+    const options = { threshold: 0.6 };
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target.querySelector('video');
+            if (entry.isIntersecting) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    }, options);
+
+    // Initial Load
+    loadInfiniteVideos();
+
+    // 4. TAP TO UNMUTE
+    document.addEventListener('click', () => {
+        document.querySelectorAll('video').forEach(v => v.muted = false);
+    }, { once: true });
+  </script>
