@@ -2,123 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RealWorldMatch Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RealWorldOne | Pro Feed</title>
     <style>
-        body { margin: 0; background: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #header { text-align: center; margin-bottom: 10px; }
-        .stats { display: flex; gap: 20px; font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
-        #game-grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 5px; background: #1e293b; padding: 10px; border-radius: 12px; border: 3px solid #334155; }
-        .tile { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #334155; border-radius: 8px; cursor: pointer; transition: 0.1s; }
-        .selected { outline: 3px solid #f0abfc; transform: scale(1.1); z-index: 10; }
-        #message-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .btn { padding: 12px 24px; background: #3b82f6; border: none; border-radius: 8px; color: white; font-weight: bold; margin-top: 15px; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        .video-container { height: 100vh; width: 100vw; scroll-snap-type: y mandatory; overflow-y: scroll; scroll-behavior: smooth; }
+        .video-card { height: 100vh; width: 100vw; scroll-snap-align: start; position: relative; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        #start-btn { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        button { padding: 20px 40px; font-size: 20px; background: #2563eb; color: #fff; border: none; border-radius: 50px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="message-overlay">
-        <h1 id="status-title">LEVEL CLEAR!</h1>
-        <button class="btn" onclick="startNextLevel()">NEXT LEVEL</button>
-    </div>
-    <div id="header">
-        <h2 id="level-display">Level 1</h2>
-        <div class="stats">
-            <div>Score: <span id="score">0</span>/<span id="target">100</span></div>
-            <div>Time: <span id="timer">60</span>s</div>
-        </div>
-    </div>
-    <div id="game-grid"></div>
 
-    <script>
-        const grid = document.getElementById('game-grid');
-        const colors = ['🍎', '💎', '🌟', '🍀', '🍬', '🔥'];
-        let score = 0, level = 1, timeLeft = 60, target = 100;
-        let selectedTile = null, gameActive = true, board = [];
+<div id="start-btn">
+    <button onclick="initFeed()">LAUNCH VIDEO FEED</button>
+</div>
 
-        function initGame() {
-            grid.innerHTML = '';
-            board = [];
-            for (let i = 0; i < 36; i++) {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.id = i;
-                tile.innerHTML = colors[Math.floor(Math.random() * colors.length)];
-                tile.onclick = () => handleTileClick(tile);
-                grid.appendChild(tile);
-                board.push(tile);
-            }
-            startTimer();
+<div class="video-container" id="feed"></div>
+
+<script>
+    const API_KEY = 'YOUR_PEXELS_API_KEY'; // Replace with your actual key
+    const feed = document.getElementById('feed');
+
+    async function initFeed() {
+        document.getElementById('start-btn').style.display = 'none';
+        try {
+            const response = await fetch('https://api.pexels.com/videos/search?query=mystery&per_page=10', {
+                headers: { Authorization: API_KEY }
+            });
+            const data = await response.json();
+            
+            data.videos.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.innerHTML = `<video src="${video.video_files[0].link}" loop playsinline muted></video>`;
+                feed.appendChild(card);
+            });
+
+            setupObserver();
+        } catch (err) {
+            console.error("Feed error:", err);
         }
+    }
 
-        function handleTileClick(tile) {
-            if (!gameActive) return;
-            if (!selectedTile) {
-                selectedTile = tile;
-                tile.classList.add('selected');
-            } else {
-                swap(selectedTile, tile);
-                selectedTile.classList.remove('selected');
-                selectedTile = null;
-            }
-        }
-
-        function swap(t1, t2) {
-            let temp = t1.innerHTML;
-            t1.innerHTML = t2.innerHTML;
-            t2.innerHTML = temp;
-            if (!checkMatches()) { // Illegal move: swap back
-                setTimeout(() => {
-                    t2.innerHTML = t1.innerHTML;
-                    t1.innerHTML = temp;
-                }, 200);
-            }
-        }
-
-        function checkMatches() {
-            let hasMatch = false;
-            // Simplified Row Check
-            for (let i = 0; i < 36; i += 6) {
-                for (let j = 0; j < 4; j++) {
-                    let idx = i + j;
-                    if (board[idx].innerHTML === board[idx+1].innerHTML && board[idx].innerHTML === board[idx+2].innerHTML) {
-                        score += 20;
-                        board[idx].innerHTML = colors[Math.floor(Math.random()*6)];
-                        hasMatch = true;
-                    }
+    function setupObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const vid = entry.target;
+                if (entry.isIntersecting) {
+                    vid.muted = false;
+                    vid.play();
+                } else {
+                    vid.pause();
                 }
-            }
-            document.getElementById('score').innerText = score;
-            if (score >= target) winLevel();
-            return hasMatch;
-        }
+            });
+        }, { threshold: 0.8 });
 
-        function winLevel() {
-            gameActive = false;
-            document.getElementById('message-overlay').style.display = 'flex';
-        }
-
-        function startNextLevel() {
-            level++;
-            target += 50;
-            timeLeft = Math.max(20, 60 - (level * 2));
-            score = 0;
-            gameActive = true;
-            document.getElementById('message-overlay').style.display = 'none';
-            document.getElementById('level-display').innerText = `Level ${level}`;
-            document.getElementById('target').innerText = target;
-            initGame();
-        }
-
-        function startTimer() {
-            const timerInt = setInterval(() => {
-                if (!gameActive) { clearInterval(timerInt); return; }
-                timeLeft--;
-                document.getElementById('timer').innerText = timeLeft;
-                if (timeLeft <= 0) { gameActive = false; alert("Game Over!"); location.reload(); }
-            }, 1000);
-        }
-
-        initGame();
-    </script>
+        document.querySelectorAll('video').forEach(v => observer.observe(v));
+    }
+</script>
 </body>
 </html>
