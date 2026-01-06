@@ -3,69 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RealWorldMatch | Level 1</title>
+    <title>RealWorldMatch Pro</title>
     <style>
-        body { margin: 0; background: #0b0e14; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #ui { text-align: center; margin-bottom: 20px; }
-        #game-board { display: grid; grid-template-columns: repeat(6, 55px); gap: 8px; background: #232936; padding: 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .cell { width: 55px; height: 55px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; background: #2d3545; transition: 0.2s; }
-        .selected { transform: scale(1.1); background: #3b82f6; box-shadow: 0 0 15px #3b82f6; border: 2px solid white; }
-        #score-text { font-size: 24px; color: #3b82f6; font-weight: bold; }
-        #win-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; }
-        .btn { padding: 15px 30px; background: #10b981; color: white; border: none; border-radius: 50px; font-weight: bold; font-size: 18px; margin-top: 20px; cursor: pointer; }
+        body { margin: 0; background: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #header { text-align: center; margin-bottom: 10px; }
+        .stats { display: flex; gap: 20px; font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
+        #game-grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 5px; background: #1e293b; padding: 10px; border-radius: 12px; border: 3px solid #334155; }
+        .tile { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #334155; border-radius: 8px; cursor: pointer; transition: 0.1s; }
+        .selected { outline: 3px solid #f0abfc; transform: scale(1.1); z-index: 10; }
+        #message-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .btn { padding: 12px 24px; background: #3b82f6; border: none; border-radius: 8px; color: white; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <div id="win-modal">
-        <h1 style="font-size: 40px; color: #10b981; margin: 0;">LEVEL 1<br>CLEAR! 🏆</h1>
-        <p style="font-size: 18px;">You hit the target score!</p>
-        <button class="btn" onclick="location.reload()">PLAY LEVEL 2</button>
+    <div id="message-overlay">
+        <h1 id="status-title">LEVEL CLEAR!</h1>
+        <button class="btn" onclick="startNextLevel()">NEXT LEVEL</button>
     </div>
-
-    <div id="ui">
-        <div id="score-text">SCORE: <span id="score">0</span> / 100</div>
+    <div id="header">
+        <h2 id="level-display">Level 1</h2>
+        <div class="stats">
+            <div>Score: <span id="score">0</span>/<span id="target">100</span></div>
+            <div>Time: <span id="timer">60</span>s</div>
+        </div>
     </div>
-
-    <div id="game-board"></div>
+    <div id="game-grid"></div>
 
     <script>
-        const board = document.getElementById('game-board');
-        const scoreEl = document.getElementById('score');
-        const winModal = document.getElementById('win-modal');
-        const colors = ['🍎', '💎', '🌟', '🍀', '🍬'];
-        let score = 0;
-        let firstSelection = null;
+        const grid = document.getElementById('game-grid');
+        const colors = ['🍎', '💎', '🌟', '🍀', '🍬', '🔥'];
+        let score = 0, level = 1, timeLeft = 60, target = 100;
+        let selectedTile = null, gameActive = true, board = [];
 
-        // Initialize Board
-        for (let i = 0; i < 36; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.innerHTML = colors[Math.floor(Math.random() * colors.length)];
-            cell.onclick = () => {
-                if (!firstSelection) {
-                    firstSelection = cell;
-                    cell.classList.add('selected');
-                } else {
-                    // Swap logic
-                    let temp = firstSelection.innerHTML;
-                    firstSelection.innerHTML = cell.innerHTML;
-                    cell.innerHTML = temp;
-                    
-                    firstSelection.classList.remove('selected');
-                    firstSelection = null;
-                    
-                    // Score logic
-                    score += 10;
-                    scoreEl.innerText = score;
-                    
-                    // Check for Win
-                    if (score >= 100) {
-                        winModal.style.display = 'flex';
+        function initGame() {
+            grid.innerHTML = '';
+            board = [];
+            for (let i = 0; i < 36; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.id = i;
+                tile.innerHTML = colors[Math.floor(Math.random() * colors.length)];
+                tile.onclick = () => handleTileClick(tile);
+                grid.appendChild(tile);
+                board.push(tile);
+            }
+            startTimer();
+        }
+
+        function handleTileClick(tile) {
+            if (!gameActive) return;
+            if (!selectedTile) {
+                selectedTile = tile;
+                tile.classList.add('selected');
+            } else {
+                swap(selectedTile, tile);
+                selectedTile.classList.remove('selected');
+                selectedTile = null;
+            }
+        }
+
+        function swap(t1, t2) {
+            let temp = t1.innerHTML;
+            t1.innerHTML = t2.innerHTML;
+            t2.innerHTML = temp;
+            if (!checkMatches()) { // Illegal move: swap back
+                setTimeout(() => {
+                    t2.innerHTML = t1.innerHTML;
+                    t1.innerHTML = temp;
+                }, 200);
+            }
+        }
+
+        function checkMatches() {
+            let hasMatch = false;
+            // Simplified Row Check
+            for (let i = 0; i < 36; i += 6) {
+                for (let j = 0; j < 4; j++) {
+                    let idx = i + j;
+                    if (board[idx].innerHTML === board[idx+1].innerHTML && board[idx].innerHTML === board[idx+2].innerHTML) {
+                        score += 20;
+                        board[idx].innerHTML = colors[Math.floor(Math.random()*6)];
+                        hasMatch = true;
                     }
                 }
-            };
-            board.appendChild(cell);
+            }
+            document.getElementById('score').innerText = score;
+            if (score >= target) winLevel();
+            return hasMatch;
         }
+
+        function winLevel() {
+            gameActive = false;
+            document.getElementById('message-overlay').style.display = 'flex';
+        }
+
+        function startNextLevel() {
+            level++;
+            target += 50;
+            timeLeft = Math.max(20, 60 - (level * 2));
+            score = 0;
+            gameActive = true;
+            document.getElementById('message-overlay').style.display = 'none';
+            document.getElementById('level-display').innerText = `Level ${level}`;
+            document.getElementById('target').innerText = target;
+            initGame();
+        }
+
+        function startTimer() {
+            const timerInt = setInterval(() => {
+                if (!gameActive) { clearInterval(timerInt); return; }
+                timeLeft--;
+                document.getElementById('timer').innerText = timeLeft;
+                if (timeLeft <= 0) { gameActive = false; alert("Game Over!"); location.reload(); }
+            }, 1000);
+        }
+
+        initGame();
     </script>
 </body>
 </html>
