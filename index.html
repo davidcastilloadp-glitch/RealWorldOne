@@ -1,10 +1,50 @@
-<!DOCTYPE html><html lang="en"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">    <title>RealWorldOne | Official Private Feed</title>    <style>        /* TikTok Style Layout */        body { margin: 0; background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }                #overlay { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }                button { padding: 20px 40px; font-size: 20px; background: #2563eb; color: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }                .video-container { height: 100vh; width: 100vw; scroll-snap-type: y mandatory; overflow-y: scroll; scroll-behavior: smooth; }                .video-card { height: 100vh; width: 100vw; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }                video { width: 100%; height: 100%; object-fit: cover; }
-        /* Pexels Branding & Artist Credits */        .pexels-watermark { position: absolute; top: 20px; right: 20px; width: 80px; z-index: 500; opacity: 0.8; }                .ui-overlay { position: absolute; bottom: 30px; left: 15px; z-index: 500; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }                .artist-name { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; font-size: 14px; color: #fff; text-decoration: none; display: inline-block; }        .artist-name span { color: #4ade80; font-weight: bold; }    </style></head><body>
-    <div id="overlay">        <h1 style="font-size: 32px; margin-bottom: 10px;">RealWorldOne</h1>        <p style="color: #888; margin-bottom: 30px;">Private Independent Feed</p>        <button onclick="startApp()">START FEED</button>    </div>
-    <div class="video-container" id="feed"></div>
-    <script>        // Your Private "Back Door" Authorization        const API_KEY = 'YkOXtOWStSMuzFFHMIlIVrFaDuakB8yY2qE8X01KLYPTtTk5QvJO5tG3';
-        async function startApp() {            document.getElementById('overlay').style.display = 'none';                        try {                // The Authorization Handshake                const response = await fetch('https://api.pexels.com/videos/popular?per_page=15', {                    headers: { 'Authorization': API_KEY }                });                const data = await response.json();
-                const feed = document.getElementById('feed');                                data.videos.forEach(video => {                    const card = document.createElement('div');                    card.className = 'video-card';                                        card.innerHTML = `                        <video src="${video.video_files[0].link}" loop playsinline></video>                        <img src="https://images.pexels.com/lib/api/pexels-white.png" class="pexels-watermark">                        <div class="ui-overlay">                            <a href="${video.user.url}" target="_blank" class="artist-name">                                Video by <span>@${video.user.name}</span>                            </a>                        </div>                    `;                    feed.appendChild(card);                });
-                // The TikTok "Auto-Play" logic                const observer = new IntersectionObserver((entries) => {                    entries.forEach(entry => {                        const vid = entry.target.querySelector('video');                        if (entry.isIntersecting) {                            vid.play().catch(err => console.log("Playback delayed..."));                        } else {                            vid.pause();                        }                    });                }, { threshold: 0.7 });
-                document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
-            } catch (error) {                console.error("Connection Error:", error);                alert("The Middleman blocked the connection. Try again in 1 minute.");            }        }    </script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RealWorldOne | Direct Feed</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        .video-container { height: 100vh; width: 100vw; scroll-snap-type: y mandatory; overflow-y: scroll; scroll-behavior: smooth; }
+        .video-card { height: 100vh; width: 100vw; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        #overlay { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        button { padding: 20px 40px; font-size: 20px; background: #2563eb; color: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        .label { position: absolute; bottom: 40px; left: 20px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div id="overlay">
+        <h1 style="margin-bottom: 20px;">RealWorldOne</h1>
+        <button onclick="startApp()">LAUNCH FEED</button>
+    </div>
+    <div class="video-container" id="feed">
+        <div class="video-card">
+            <video src="https://player.vimeo.com/external/370331493.sd.mp4?s=7b94496cd2b489a27e7d98b0453303c7a0d426d0&profile_id=139&oauth2_token_id=57447761" loop playsinline></video>
+            <div class="label">DIY & Crafting</div>
+        </div>
+        <div class="video-card">
+            <video src="https://player.vimeo.com/external/403217498.sd.mp4?s=340332851d9d9b4b0a4305f635f79579042296d1&profile_id=139&oauth2_token_id=57447761" loop playsinline></video>
+            <div class="label">UFO / Deep Space</div>
+        </div>
+        <div class="video-card">
+            <video src="https://player.vimeo.com/external/441235123.sd.mp4?s=a7114675549887756f7e4435b67817e7934c9c15&profile_id=139&oauth2_token_id=57447761" loop playsinline></video>
+            <div class="label">Atmospheric Science</div>
+        </div>
+    </div>
+    <script>
+        function startApp() {
+            document.getElementById('overlay').style.display = 'none';
+            const videos = document.querySelectorAll('video');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) { entry.target.play(); } 
+                    else { entry.target.pause(); }
+                });
+            }, { threshold: 0.7 });
+            videos.forEach(vid => observer.observe(vid));
+        }
+    </script>
+</body>
+</html>
